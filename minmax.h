@@ -34,13 +34,12 @@ int up_enq(QUEUE *pq,REQ rq){
 		}
 		pq->req_queue[son]=rq;
 		pq->n++;
-		printf("%\nIN ENQUEUE up->n:%d",pq->n);
 		return 1;
 	}
 
 }
 
-int down_enq(QUEUE *pq,REQ rq){
+/*int down_enq(QUEUE *pq,REQ rq){
 	int son,father;
 
 	if(pq->n==NUM_OF_FLOORS){
@@ -61,7 +60,7 @@ int down_enq(QUEUE *pq,REQ rq){
 		return 1;
 	}
 }
-
+*/
 int deq(QUEUE *pq){
 	if(pq->n==0){
 		return 0;
