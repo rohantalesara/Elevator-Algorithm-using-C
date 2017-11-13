@@ -14,9 +14,10 @@ typedef struct liftinfo{
     int currentfloor;
     int r;
     int movingup;  //1 if lift is moving up, 0 if down
-    QUEUE *up;     //min heap
-    QUEUE *down;   //max heap
     REQ newreq;
+    QUEUE *down;
+    QUEUE *up;
+
 }liftinfo;
 
 main(){
@@ -32,20 +33,29 @@ main(){
     init_queue(linfo->up);
     init_queue(linfo->down);
 
+    /*printf("\nMAIN\nup->n:%d",linfo->up->n++);
+    printf("\nAfter Increment:%d",linfo->up->n++);
+    printf("\nAnother increment:%d",linfo->up->n);*/
+
     pthread_t thread1,thread2;
     int  iret1,iret2;
+    //printf("\nlinfo->up->n:%d",linfo->up->n);
     iret1 = pthread_create( &thread1, NULL, floorplus , (void *)linfo);
     if(iret1)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n",iret1);
         exit(EXIT_FAILURE);
     }
+    //printf("\nlinfo->up->n:%d",linfo->up->n);
     iret2 = pthread_create( &thread2,NULL, dude, (void *)linfo);
+    //printf("\nlinfo->up->n:%d",linfo->up->n);
     if(iret2){
         fprintf(stderr,"Error - pthread_create() return code: %d\n",iret2);
         exit(EXIT_FAILURE);
     }
-    pthread_join( thread1, NULL);
+
+    //printf("\nlinfo->up->n:%d",linfo->up->n);
+    pthread_join( thread2, NULL);
 }
 
 void *floorplus(void *linfo){
@@ -54,19 +64,22 @@ void *floorplus(void *linfo){
         p=(liftinfo*)malloc(sizeof(liftinfo));
         p=(liftinfo*)linfo;
 
-        if(p->up->n=0 && p->down->n==0){
+        /*if(p->up->n==0 && p->down->n==0){
             p->idle=1;
-        }
+        }*/
 
         if(p->idle==0){
             Sleep(2000);
             if(p->movingup==1){
                 p->currentfloor++;
                 printf("\ncurrent:%d",p->currentfloor);
-                printf("\np->up->n%d",p->up->n);
                 if(p->up->n > 0 && p->currentfloor==p->up->req_queue[0].floor){
                     printf("  OPEN AT %d",p->currentfloor);
                     deq(p->up);
+                    if(p->up->n==0 && p->down->n==0){
+                        p->idle=1;
+                        printf("\nLift Idle");
+                    }
                 }
                 if(p->currentfloor==5){
                     p->movingup=0;
@@ -78,6 +91,10 @@ void *floorplus(void *linfo){
                 if(p->down->n>0 && p->currentfloor==p->down->req_queue[0].floor){
                     printf("  OPEN AT %d",p->currentfloor);
                     deq(p->down);
+                    if(p->up->n==0 && p->down->n==0){
+                        p->idle=1;
+                        printf("\nLift Idle");
+                    }
                 }
                 if(p->currentfloor==1){
                     p->movingup=1;
@@ -90,28 +107,42 @@ void *floorplus(void *linfo){
 
 void *dude(void *linfo)
 {
+    printf("\nEnter floor request:");
     while(1){
         liftinfo *p;
         p=(liftinfo*)malloc(sizeof(liftinfo));
         p=(liftinfo*)linfo;
-        printf("\nEnter floor request:");
         scanf("%d",&(p->r));
-        printf("\nRequest taken");
 
-        if(p->r > p->currentfloor){
+        if(p->r < 0){
+            break;
+        }
+
+        if((p->r) == (p->currentfloor)){
+            printf("\nOPEN AT %d",p->r);
+        }
+        else if((p->r) > (p->currentfloor)){
             p->newreq.floor=p->r;
             p->newreq.priority=p->r;
             p->newreq.time=(float)clock()/CLOCKS_PER_SEC;
             up_enq(p->up,p->newreq);
-            p->idle=0;
-            printf("\nIN DUDE up n:%d",p->up->n);
+            if(p->idle==1){
+                p->idle=0;
+                p->movingup=1;
+            }
+            printf("\nRequest taken at %d:",p->r);
+
         }
         else{
             p->newreq.floor=p->r;
             p->newreq.priority=NUM_OF_FLOORS+1- p->r;
             p->newreq.time=(float)clock()/CLOCKS_PER_SEC;
             up_enq(p->down,p->newreq);
-            p->idle=0;
+            if(p->idle==1){
+                p->idle=0;
+                p->movingup=0;
+            }
+            printf("\nRequest taken at %d:",p->r);
         }
     }
 }
