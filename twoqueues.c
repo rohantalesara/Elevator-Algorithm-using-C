@@ -7,7 +7,7 @@
 #include<time.h>
 
 void *floorplus(void *idle);
-void *dude(void *r);
+void *req_taker(void *r);
 
 typedef struct liftinfo{
     int idle;      //1 if idle, 0 if not
@@ -33,28 +33,21 @@ main(){
     init_queue(linfo->up);
     init_queue(linfo->down);
 
-    /*printf("\nMAIN\nup->n:%d",linfo->up->n++);
-    printf("\nAfter Increment:%d",linfo->up->n++);
-    printf("\nAnother increment:%d",linfo->up->n);*/
-
     pthread_t thread1,thread2;
     int  iret1,iret2;
-    //printf("\nlinfo->up->n:%d",linfo->up->n);
     iret1 = pthread_create( &thread1, NULL, floorplus , (void *)linfo);
     if(iret1)
     {
         fprintf(stderr,"Error - pthread_create() return code: %d\n",iret1);
         exit(EXIT_FAILURE);
     }
-    //printf("\nlinfo->up->n:%d",linfo->up->n);
-    iret2 = pthread_create( &thread2,NULL, dude, (void *)linfo);
-    //printf("\nlinfo->up->n:%d",linfo->up->n);
+
+    iret2 = pthread_create( &thread2,NULL, req_taker, (void *)linfo);
     if(iret2){
         fprintf(stderr,"Error - pthread_create() return code: %d\n",iret2);
         exit(EXIT_FAILURE);
     }
 
-    //printf("\nlinfo->up->n:%d",linfo->up->n);
     pthread_join( thread2, NULL);
 }
 
@@ -63,10 +56,6 @@ void *floorplus(void *linfo){
         liftinfo *p;
         p=(liftinfo*)malloc(sizeof(liftinfo));
         p=(liftinfo*)linfo;
-
-        /*if(p->up->n==0 && p->down->n==0){
-            p->idle=1;
-        }*/
 
         if(p->idle==0){
             Sleep(2000);
@@ -81,7 +70,7 @@ void *floorplus(void *linfo){
                         printf("\nLift Idle");
                     }
                 }
-                if(p->currentfloor==5){
+                if(p->currentfloor==NUM_OF_FLOORS){
                     p->movingup=0;
                 }
             }
@@ -105,9 +94,9 @@ void *floorplus(void *linfo){
     }
 }
 
-void *dude(void *linfo)
+void *req_taker(void *linfo)
 {
-    printf("\nEnter floor request:");
+    printf("\nEnter floor request:\n");
     while(1){
         liftinfo *p;
         p=(liftinfo*)malloc(sizeof(liftinfo));
@@ -115,11 +104,16 @@ void *dude(void *linfo)
         scanf("%d",&(p->r));
 
         if(p->r < 0){
+            printf("\nABORTING");
             break;
         }
 
         if((p->r) == (p->currentfloor)){
+            p->idle=1;
             printf("\nOPEN AT %d",p->r);
+            Sleep(1500);
+            printf("\nCLOSED AT %d\n",p->r);
+            p->idle=0;
         }
         else if((p->r) > (p->currentfloor)){
             p->newreq.floor=p->r;
