@@ -1,5 +1,4 @@
 #define NUM_OF_FLOORS 5
-#define TRAVEL_TIME 4
 
 typedef struct request{
 	int floor;
@@ -8,7 +7,7 @@ typedef struct request{
 }REQ;
 
 typedef struct queue{
-	REQ req_queue[5];
+	REQ req_queue[NUM_OF_FLOORS];
 	int n;
 }QUEUE;
 
@@ -39,28 +38,6 @@ int up_enq(QUEUE *pq,REQ rq){
 
 }
 
-/*int down_enq(QUEUE *pq,REQ rq){
-	int son,father;
-
-	if(pq->n==NUM_OF_FLOORS){
-		printf("\nRequest at %d ignored\n",rq.floor);
-		return 0;
-	}
-
-	else{
-		son=pq->n;
-		father=(son-1)/2;
-		while(son>0 && pq->req_queue[father].priority < rq.priority ){
-			pq->req_queue[son]=pq->req_queue[father];
-			son=father;
-			father=(son-1)/2;
-		}
-		pq->req_queue[son]=rq;
-		pq->n++;
-		return 1;
-	}
-}
-*/
 int deq(QUEUE *pq){
 	if(pq->n==0){
 		return 0;
